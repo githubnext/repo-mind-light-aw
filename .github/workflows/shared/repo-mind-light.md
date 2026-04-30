@@ -33,6 +33,9 @@
 # - Provide GitHub read permissions suitable for the configured indexing scope.
 # - Use a runner with Docker, `jq`, `curl`, and the ability to bind port 8000.
 # - Keep event-specific gating in the consumer workflow rather than here.
+# - This import is unconditional once composed. If a consumer needs selective
+#   enablement, use a higher-level wrapper import or keep that workflow-specific
+#   setup local instead of expecting this shared import to toggle on and off.
 #
 # Recommended `config-yaml` fields for most workflows:
 #
@@ -68,36 +71,49 @@
 #   browsing.
 
 import-schema:
-  config-yaml:
-    type: string
+  config:
+    type: object
     required: true
     description: >
-      Full Repo Mind Light YAML configuration content. The workflow writes this
-      to .repo-mind-light.config.yml in both the prep job and the agent job.
-      This is the main behavioral input. Typical fields include slug,
-      refresh_if_older_than, indexing filters, and query settings.
+      Repo Mind Light configuration object. Put the full YAML content in the
+      required `yaml` property. This indirection exists because gh-aw import
+      substitution is reliable for object inputs in step env blocks but not for
+      raw multiline string inputs embedded directly in frontmatter.
+    properties:
+      yaml:
+        type: string
+        required: true
+        description: >
+          Full Repo Mind Light YAML configuration content. The workflow writes
+          this to .repo-mind-light.config.yml in both the prep job and the
+          agent job. Typical fields include slug, refresh_if_older_than,
+          indexing filters, and query settings.
   image:
     type: string
     required: false
+    default: ghcr.io/githubnext/repo-mind-light:latest
     description: >
-      Repo Mind Light container image reference. Defaults to a pinned published
-      Repo Mind Light image. Override this only to test a new image or pin a
-      different release intentionally.
+      Repo Mind Light container image reference. Defaults to the latest
+      published Repo Mind Light image. Override this to pin a specific release
+      or test a different image intentionally.
   cache-prefix:
     type: string
     required: false
+    default: repo-mind-light-index-
     description: >
       Prefix used when deriving refreshed index cache keys. Defaults are safe
       for most consumers.
   cache-restore-key:
     type: string
     required: false
+    default: repo-mind-light-index-restore
     description: >
       Primary restore key used for the index cache restore step. Useful when a
       consumer wants a workflow-specific cache namespace.
   container-name:
     type: string
     required: false
+    default: repo-mind-light-mcp
     description: >
       Docker container name used for the agent-job Repo Mind Light MCP server.
       Override only if the consumer workflow might collide with another
@@ -105,18 +121,10 @@ import-schema:
   artifact-name:
     type: string
     required: false
+    default: repo-mind-light-index
     description: >
       Base artifact name used for the prepared Repo Mind Light index. gh-aw's
       activation artifact prefix is added automatically to avoid collisions.
-
-env:
-  REPO_MIND_LIGHT_CACHE_PREFIX: ${{ github.aw.import-inputs.cache-prefix || 'repo-mind-light-index-' }}
-  REPO_MIND_LIGHT_CACHE_RESTORE_KEY: ${{ github.aw.import-inputs.cache-restore-key || 'repo-mind-light-index-restore' }}
-  REPO_MIND_LIGHT_CONTAINER_NAME: ${{ github.aw.import-inputs.container-name || 'repo-mind-light-mcp' }}
-  REPO_MIND_LIGHT_ARTIFACT_NAME: ${{ github.aw.import-inputs.artifact-name || 'repo-mind-light-index' }}
-  REPO_MIND_LIGHT_IMAGE: ${{ github.aw.import-inputs.image || 'ghcr.io/githubnext/repo-mind-light:v0.7.0@sha256:066f2b3646d238a865cd080234001aa1febec8a32970aa7cea84efc688135081' }}
-  REPO_MIND_LIGHT_CONFIG_YAML: |
-    ${{ github.aw.import-inputs.config-yaml }}
 
 jobs:
   repo-mind-light-prep:
@@ -132,16 +140,21 @@ jobs:
         uses: actions/checkout@v6.0.2
 
       - name: Write Repo Mind Light config
+        env:
+          REPO_MIND_LIGHT_CONFIG_MAP: ${{ github.aw.import-inputs.config }}
         run: |
-          printf '%s\n' "$REPO_MIND_LIGHT_CONFIG_YAML" > .repo-mind-light.config.yml
+          set -euo pipefail
+          config_yaml="${REPO_MIND_LIGHT_CONFIG_MAP#map[yaml:}"
+          config_yaml="${config_yaml%]}"
+          printf '%s\n' "$config_yaml" > .repo-mind-light.config.yml
 
       - name: Restore Repo Mind Light index cache
         uses: actions/cache/restore@v5.0.5
         with:
           path: .index-store
-          key: ${{ env.REPO_MIND_LIGHT_CACHE_RESTORE_KEY }}
+          key: ${{ github.aw.import-inputs.cache-restore-key }}
           restore-keys: |
-            ${{ env.REPO_MIND_LIGHT_CACHE_PREFIX }}
+            ${{ github.aw.import-inputs.cache-prefix }}
 
       - name: Ensure index directory exists
         run: |
@@ -149,6 +162,8 @@ jobs:
           chmod -R a+rwX .index-store
 
       - name: Pull Repo Mind Light image
+        env:
+          REPO_MIND_LIGHT_IMAGE: ${{ github.aw.import-inputs.image }}
         run: docker pull "$REPO_MIND_LIGHT_IMAGE"
 
       - name: Run incremental indexing
@@ -157,6 +172,8 @@ jobs:
           COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
           GITHUB_TOKEN: ${{ github.token }}
           REPO_MIND_LIGHT_CONFIG: /tmp/repo-mind-light.config.yml
+          REPO_MIND_LIGHT_CACHE_PREFIX: ${{ github.aw.import-inputs.cache-prefix }}
+          REPO_MIND_LIGHT_IMAGE: ${{ github.aw.import-inputs.image }}
         run: |
           set -euo pipefail
           result_json_dir="$RUNNER_TEMP/repo-mind-light-index"
@@ -210,7 +227,7 @@ jobs:
       - name: Upload Repo Mind Light index artifact
         uses: actions/upload-artifact@v7.0.1
         with:
-          name: ${{ needs.activation.outputs.artifact_prefix }}${{ env.REPO_MIND_LIGHT_ARTIFACT_NAME }}
+          name: ${{ needs.activation.outputs.artifact_prefix }}${{ github.aw.import-inputs.artifact-name }}
           path: .index-store
           if-no-files-found: error
           include-hidden-files: true
@@ -230,7 +247,7 @@ pre-agent-steps:
   - name: Download Repo Mind Light index artifact
     uses: actions/download-artifact@v8.0.1
     with:
-      name: ${{ needs.activation.outputs.artifact_prefix }}${{ env.REPO_MIND_LIGHT_ARTIFACT_NAME }}
+      name: ${{ needs.activation.outputs.artifact_prefix }}${{ github.aw.import-inputs.artifact-name }}
       path: .index-store
 
   - name: Ensure Repo Mind Light directories exist
@@ -239,13 +256,20 @@ pre-agent-steps:
       chmod -R a+rwX .index-store /tmp/gh-aw/mcp-logs
 
   - name: Write Repo Mind Light config
+    env:
+      REPO_MIND_LIGHT_CONFIG_MAP: ${{ github.aw.import-inputs.config }}
     run: |
-      printf '%s\n' "$REPO_MIND_LIGHT_CONFIG_YAML" > .repo-mind-light.config.yml
+      set -euo pipefail
+      config_yaml="${REPO_MIND_LIGHT_CONFIG_MAP#map[yaml:}"
+      config_yaml="${config_yaml%]}"
+      printf '%s\n' "$config_yaml" > .repo-mind-light.config.yml
 
   - name: Start Repo Mind Light MCP server
     env:
       COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
       GITHUB_TOKEN: ${{ github.token }}
+      REPO_MIND_LIGHT_CONTAINER_NAME: ${{ github.aw.import-inputs.container-name }}
+      REPO_MIND_LIGHT_IMAGE: ${{ github.aw.import-inputs.image }}
     run: |
       set -euo pipefail
       docker rm -f "$REPO_MIND_LIGHT_CONTAINER_NAME" >/dev/null 2>&1 || true
@@ -262,12 +286,16 @@ pre-agent-steps:
         "$REPO_MIND_LIGHT_IMAGE"
 
   - name: Capture initial Repo Mind Light logs
+    env:
+      REPO_MIND_LIGHT_CONTAINER_NAME: ${{ github.aw.import-inputs.container-name }}
     run: |
       docker logs "$REPO_MIND_LIGHT_CONTAINER_NAME" \
         > /tmp/gh-aw/mcp-logs/repo-mind-light-startup.log 2>&1 || true
 
   - name: Wait for Repo Mind Light preload readiness
     timeout-minutes: 10
+    env:
+      REPO_MIND_LIGHT_CONTAINER_NAME: ${{ github.aw.import-inputs.container-name }}
     run: |
       set -euo pipefail
       status_file='/tmp/gh-aw/mcp-logs/repo-mind-light-preload-status.json'
@@ -308,6 +336,8 @@ pre-agent-steps:
 post-steps:
   - name: Capture Repo Mind Light logs
     if: always()
+    env:
+      REPO_MIND_LIGHT_CONTAINER_NAME: ${{ github.aw.import-inputs.container-name }}
     run: |
       mkdir -p /tmp/gh-aw/mcp-logs
       if docker ps -a --format '{{.Names}}' | grep -Fxq "$REPO_MIND_LIGHT_CONTAINER_NAME"; then
@@ -317,6 +347,8 @@ post-steps:
 
   - name: Stop Repo Mind Light MCP server
     if: always()
+    env:
+      REPO_MIND_LIGHT_CONTAINER_NAME: ${{ github.aw.import-inputs.container-name }}
     run: docker rm -f "$REPO_MIND_LIGHT_CONTAINER_NAME" || true
 ---
 

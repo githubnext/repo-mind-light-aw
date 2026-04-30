@@ -76,12 +76,13 @@ Import the shared workflow from a consuming gh-aw workflow:
 imports:
   - uses: githubnext/repo-mind-light-aw/.github/workflows/shared/repo-mind-light.md@main
     with:
-      config-yaml: |
-        slug: ${{ github.repository }}
-        store_path: /var/lib/repo-mind-light/index
-        refresh_if_older_than: 1d
-        query:
-          preload_query_sources_on_startup: true
+      config:
+        yaml: |
+          slug: ${{ github.repository }}
+          store_path: /var/lib/repo-mind-light/index
+          refresh_if_older_than: 1d
+          query:
+            preload_query_sources_on_startup: true
 ```
 
 Then add consumer-specific permissions, GitHub tool settings, safe outputs, and task instructions in your own workflow.
@@ -109,14 +110,15 @@ So even when the surrounding workflow uses a non-Copilot engine, `COPILOT_GITHUB
 
 The shared workflow accepts these inputs:
 
-- `config-yaml`: full Repo Mind Light configuration content. Required.
+- `config`: Repo Mind Light configuration object. Required.
+- `config.yaml`: full Repo Mind Light configuration content stored under the required `yaml` property.
 - `image`: optional Repo Mind Light container image override.
 - `cache-prefix`: optional prefix for refreshed cache keys.
 - `cache-restore-key`: optional restore key for the index cache.
 - `container-name`: optional Docker container name for the MCP server.
 - `artifact-name`: optional artifact base name for the prepared index.
 
-These inputs are intentionally narrow. Most behavioral tuning happens inside `config-yaml`, which is passed through directly to Repo Mind Light.
+These inputs are intentionally narrow. Most behavioral tuning happens inside `config.yaml`, which is passed through directly to Repo Mind Light.
 
 ## Repo Mind Light Config Schema
 
@@ -196,6 +198,8 @@ Consuming workflows should provide:
 
 The shared workflow expects to use the public Repo Mind Light image published at `ghcr.io/githubnext/repo-mind-light` unless the `image` input overrides it.
 
+By default, the shared workflow tracks `ghcr.io/githubnext/repo-mind-light:latest` so it picks up the current published release. Consumers that need stricter reproducibility should override `image` with an explicit tag or digest.
+
 Consumers should also ensure:
 
 - the runner can bind port `8000` for the Repo Mind Light MCP server
@@ -226,6 +230,7 @@ Agents and workflow authors should assume the following constraints:
 - this repository contains integration logic, not the private or implementation-specific source for Repo Mind Light
 - the shared workflow assumes Repo Mind Light is enabled for the whole consumer workflow
 - event-specific gating belongs in the consuming workflow
+- importing this workflow is unconditional; if a consumer needs selective enablement for only some events, use a higher-level wrapper import or keep that setup local instead of expecting this shared import to turn itself on and off
 - the import is designed for repository-scoped retrieval, not for cross-repository discovery by itself
 - the MCP server startup path depends on a valid prepared index; if no index exists or indexing fails, the consumer workflow should fail fast
 
