@@ -2,11 +2,70 @@
 # Repo Mind Light - Shared Workflow
 # Reusable Repo Mind Light integration for gh-aw workflows.
 #
+# This repository is meant to be understandable by both humans and agents.
+# The comments in this file are intentionally detailed because agents may read
+# this file directly when deciding how to compose a consumer workflow.
+#
 # This shared workflow bundles four concerns behind one local import:
 # 1. incremental index preparation in a dedicated job
 # 2. artifact handoff into the agent job
 # 3. MCP server startup, readiness checks, and cleanup
 # 4. prompt guidance telling the agent to use Repo Mind Light first
+#
+# Operational summary:
+# - Consumer workflows provide a Repo Mind Light config via `config-yaml`.
+# - This shared workflow writes that config to `.repo-mind-light.config.yml`.
+# - The prep job restores or refreshes `.index-store` and uploads it as an
+#   artifact for the agent job.
+# - The agent job downloads the artifact, starts Repo Mind Light on port 8000,
+#   waits for preload readiness, then exposes only the `query` MCP tool.
+#
+# Retention and cache behavior:
+# - Uploaded index artifacts use `retention-days: 1`.
+# - Cache entries are immutable and are only saved when the structured
+#   `repo-mind-light index --result-json ...` output reports `refreshed=true`.
+# - Cache eviction after that is controlled by GitHub Actions cache policy.
+#
+# Consumer responsibilities:
+# - Provide `COPILOT_GITHUB_TOKEN`. Repo Mind Light itself uses Copilot-backed
+#   model access for embeddings and final answer synthesis, regardless of which
+#   outer agent engine the consumer workflow uses.
+# - Provide GitHub read permissions suitable for the configured indexing scope.
+# - Use a runner with Docker, `jq`, `curl`, and the ability to bind port 8000.
+# - Keep event-specific gating in the consumer workflow rather than here.
+#
+# Recommended `config-yaml` fields for most workflows:
+#
+#   slug: owner/repo                           # required
+#   store_path: /var/lib/repo-mind-light/index
+#   refresh_if_older_than: 1d                 # always | never | 3600 | 15m | 6h | 1d
+#   indexing:
+#     keep_count: 1000
+#     issue_state: all                        # open | closed | all | none | null
+#     pr_state: all                           # open | closed | merged | all | none | null
+#     issue_labels: null                      # optional any-of filter
+#     pr_labels: null                         # optional any-of filter
+#     ignore_bot_authored: true
+#   query:
+#     preload_query_sources_on_startup: true
+#     graph_rag_zero:
+#       top_k_initial: 1000
+#       max_chunks: 200
+#       relative_dropoff_threshold: 0.1
+#       knn_neighbors: 5
+#       max_cluster_size: 10
+#     code_search:
+#       enabled: true
+#       limit: 50
+#
+# Query guidance:
+# - Prefer one focused `query` over broad exploratory prompting.
+# - Best inputs are exact errors, feature names, ownership hints, or requests
+#   for similar regressions and concrete relevant code areas.
+# - `preload_query_sources_on_startup: true` reduces first-query latency by
+#   warming preloadable sources after server startup.
+# - The `query` tool is for repository-context retrieval, not arbitrary remote
+#   browsing.
 
 import-schema:
   config-yaml:
@@ -15,27 +74,34 @@ import-schema:
     description: >
       Full Repo Mind Light YAML configuration content. The workflow writes this
       to .repo-mind-light.config.yml in both the prep job and the agent job.
+      This is the main behavioral input. Typical fields include slug,
+      refresh_if_older_than, indexing filters, and query settings.
   image:
     type: string
     required: false
     description: >
       Repo Mind Light container image reference. Defaults to a pinned published
-      Repo Mind Light image.
+      Repo Mind Light image. Override this only to test a new image or pin a
+      different release intentionally.
   cache-prefix:
     type: string
     required: false
     description: >
-      Prefix used when deriving refreshed index cache keys.
+      Prefix used when deriving refreshed index cache keys. Defaults are safe
+      for most consumers.
   cache-restore-key:
     type: string
     required: false
     description: >
-      Primary restore key used for the index cache restore step.
+      Primary restore key used for the index cache restore step. Useful when a
+      consumer wants a workflow-specific cache namespace.
   container-name:
     type: string
     required: false
     description: >
       Docker container name used for the agent-job Repo Mind Light MCP server.
+      Override only if the consumer workflow might collide with another
+      container name.
   artifact-name:
     type: string
     required: false
@@ -258,6 +324,10 @@ post-steps:
 
 Use Repo Mind Light for repository-context retrieval before falling back to broad repo exploration.
 
+This import exposes a repository-scoped `query` tool through the `repo-mind` MCP server.
+
+The server reads from an index built from the repository configured in `config-yaml`.
+
 ## Required Usage Pattern
 
 1. Make one focused `query` request first.
@@ -269,4 +339,6 @@ Use Repo Mind Light for repository-context retrieval before falling back to broa
 
 - Repo Mind Light is available at the `repo-mind` MCP server with the `query` tool.
 - Startup and runtime logs are written under `/tmp/gh-aw/mcp-logs/` for debugging.
+- Use Repo Mind Light when you need repository-local context such as similar incidents, relevant code areas, ownership hints, or related implementation history.
+- Prefer focused, discriminating queries over broad prompts.
 - This shared import assumes Repo Mind Light is enabled for the whole workflow. If a consumer needs event-specific gating, keep that decision in the consumer workflow or introduce a higher-level abstraction.
