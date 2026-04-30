@@ -154,7 +154,7 @@ jobs:
       - name: Run incremental indexing
         id: incremental-index
         env:
-          COPILOT_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
+          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
           GITHUB_TOKEN: ${{ github.token }}
           REPO_MIND_LIGHT_CONFIG: /tmp/repo-mind-light.config.yml
         run: |
@@ -162,7 +162,7 @@ jobs:
           result_json_dir="$RUNNER_TEMP/repo-mind-light-index"
           result_json_path="$result_json_dir/result.json"
 
-          test -n "$COPILOT_TOKEN" || {
+          test -n "$COPILOT_GITHUB_TOKEN" || {
             echo "COPILOT_GITHUB_TOKEN secret is required" >&2
             exit 1
           }
@@ -175,7 +175,7 @@ jobs:
             -v "$PWD/.index-store:/var/lib/repo-mind-light/index" \
             -v "$result_json_dir:/tmp/repo-mind-light-result" \
             -v "$PWD/.repo-mind-light.config.yml:/tmp/repo-mind-light.config.yml:ro" \
-            -e COPILOT_TOKEN \
+            -e COPILOT_GITHUB_TOKEN \
             -e GITHUB_TOKEN \
             -e REPO_MIND_LIGHT_CONFIG \
             "$REPO_MIND_LIGHT_IMAGE" \
@@ -244,7 +244,7 @@ pre-agent-steps:
 
   - name: Start Repo Mind Light MCP server
     env:
-      COPILOT_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
+      COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
       GITHUB_TOKEN: ${{ github.token }}
     run: |
       set -euo pipefail
@@ -256,7 +256,7 @@ pre-agent-steps:
         -p 8000:8000 \
         -v "$PWD/.index-store:/var/lib/repo-mind-light/index" \
         -v "$PWD/.repo-mind-light.config.yml:/tmp/repo-mind-light.config.yml:ro" \
-        -e COPILOT_TOKEN \
+        -e COPILOT_GITHUB_TOKEN \
         -e GITHUB_TOKEN \
         -e REPO_MIND_LIGHT_CONFIG=/tmp/repo-mind-light.config.yml \
         "$REPO_MIND_LIGHT_IMAGE"
