@@ -32,10 +32,8 @@
 #   outer agent engine the consumer workflow uses.
 # - Provide GitHub read permissions suitable for the configured indexing scope.
 # - Use a runner with Docker, `jq`, `curl`, and the ability to bind port 8000.
-# - Keep event-specific gating in the consumer workflow rather than here.
-# - This import is unconditional once composed. If a consumer needs selective
-#   enablement, use a higher-level wrapper import or keep that workflow-specific
-#   setup local instead of expecting this shared import to toggle on and off.
+# - Keep event-specific gating policy in the consumer workflow and pass it through
+#   the `run-if` input when Repo Mind Light should only run for selected events.
 #
 # Recommended `config-yaml` fields for most workflows:
 #
@@ -125,10 +123,20 @@ import-schema:
     description: >
       Base artifact name used for the prepared Repo Mind Light index. gh-aw's
       activation artifact prefix is added automatically to avoid collisions.
+  run-if:
+    type: string
+    required: false
+    default: 'true'
+    description: >
+      GitHub Actions expression used as the job-level condition for the Repo
+      Mind Light prep job. Defaults to true. Consumers can pass an event or
+      label condition to skip indexing and the dependent agent job when Repo
+      Mind Light should not run.
 
 jobs:
   repo-mind-light-prep:
     name: Prepare Repo Mind Light index
+    if: ${{ github.aw.import-inputs.run-if }}
     runs-on: ubuntu-latest
     needs: [activation]
     permissions:
@@ -373,4 +381,4 @@ The server reads from an index built from the repository configured in `config-y
 - Startup and runtime logs are written under `/tmp/gh-aw/mcp-logs/` for debugging.
 - Use Repo Mind Light when you need repository-local context such as similar incidents, relevant code areas, ownership hints, or related implementation history.
 - Prefer focused, discriminating queries over broad prompts.
-- This shared import assumes Repo Mind Light is enabled for the whole workflow. If a consumer needs event-specific gating, keep that decision in the consumer workflow or introduce a higher-level abstraction.
+- This shared import enables Repo Mind Light for the whole workflow by default. If a consumer needs event-specific gating, pass a GitHub Actions expression through the `run-if` input.

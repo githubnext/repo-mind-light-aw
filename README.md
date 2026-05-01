@@ -200,6 +200,23 @@ The shared workflow expects to use the public Repo Mind Light image published at
 
 By default, the shared workflow tracks `ghcr.io/githubnext/repo-mind-light:latest` so it picks up the current published release. Consumers that need stricter reproducibility should override `image` with an explicit tag or digest.
 
+Consumers that only need Repo Mind Light for some events can pass a GitHub Actions expression through `run-if`. The expression is applied to the Repo Mind Light prep job; when it is false, the dependent agent job is skipped too.
+
+```yaml
+imports:
+  - uses: githubnext/repo-mind-light-aw/.github/workflows/shared/repo-mind-light.md@main
+    with:
+      run-if: >-
+        github.event_name == 'workflow_dispatch' ||
+        contains(github.event.issue.labels.*.name, 'support-escalation') ||
+        contains(github.event.issue.labels.*.name, 'internal-feedback')
+      config:
+        yaml: |
+          slug: ${{ github.repository }}
+          store_path: /var/lib/repo-mind-light/index
+          refresh_if_older_than: 1d
+```
+
 Consumers should also ensure:
 
 - the runner can bind port `8000` for the Repo Mind Light MCP server
@@ -228,9 +245,8 @@ More concretely:
 Agents and workflow authors should assume the following constraints:
 
 - this repository contains integration logic, not the private or implementation-specific source for Repo Mind Light
-- the shared workflow assumes Repo Mind Light is enabled for the whole consumer workflow
-- event-specific gating belongs in the consuming workflow
-- importing this workflow is unconditional; if a consumer needs selective enablement for only some events, use a higher-level wrapper import or keep that setup local instead of expecting this shared import to turn itself on and off
+- the shared workflow assumes Repo Mind Light is enabled for the whole consumer workflow unless the consumer passes `run-if`
+- event-specific gating policy belongs in the consuming workflow and can be passed through the `run-if` input
 - the import is designed for repository-scoped retrieval, not for cross-repository discovery by itself
 - the MCP server startup path depends on a valid prepared index; if no index exists or indexing fails, the consumer workflow should fail fast
 
