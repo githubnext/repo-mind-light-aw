@@ -23,7 +23,8 @@
 # Retention and cache behavior:
 # - Uploaded index artifacts use `retention-days: 1`.
 # - Cache entries are immutable and are only saved when the structured
-#   `repo-mind-light index --result-json ...` output reports `refreshed=true`.
+#   `repo-mind-light index --result-json ...` output reports at least one
+#   refreshed source.
 # - Cache eviction after that is controlled by GitHub Actions cache policy.
 #
 # Consumer responsibilities:
@@ -223,12 +224,30 @@ jobs:
             exit 1
           }
 
-          refreshed="$(jq -r '.refreshed | if type == "boolean" then . else error("missing refreshed") end' "$result_json_path")"
+          refreshed="$(jq -r '
+            if (.refreshed | type) == "boolean" then
+              .refreshed
+            elif (.sources | type) == "array" then
+              any(.sources[]; .refreshed == true)
+            else
+              error("missing refreshed")
+            end
+          ' "$result_json_path")"
           echo "changed=${refreshed}" >> "$GITHUB_OUTPUT"
 
           if test "$refreshed" = 'true'; then
             cache_key="$(jq -re --arg prefix "$REPO_MIND_LIGHT_CACHE_PREFIX" '
-              .last_refreshed_at
+              if (.last_refreshed_at | type) == "string" then
+                .last_refreshed_at
+              elif (.sources | type) == "array" then
+                [
+                  .sources[]
+                  | select(.refreshed == true and (.last_refreshed_at | type) == "string")
+                  | .last_refreshed_at
+                ] | max
+              else
+                null
+              end
               | if type == "string" and length > 0
                 then $prefix + (split("T")[0])
                 else error("missing last_refreshed_at")

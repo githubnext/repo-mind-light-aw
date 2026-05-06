@@ -209,7 +209,7 @@ This shared workflow has several storage behaviors that matter operationally:
 
 - The prepared index is uploaded as a GitHub Actions artifact with `retention-days: 1`.
 - The local working directory uses `.index-store` as the mounted index path during workflow execution.
-- Refreshed cache entries are saved only when the Repo Mind Light indexer reports `refreshed=true` in its structured `--result-json` output.
+- Refreshed cache entries are saved only when the Repo Mind Light indexer reports at least one refreshed source in its structured `--result-json` output.
 - Cache keys are derived from the refresh date and are intentionally immutable.
 - Cache eviction after that point is controlled by GitHub Actions cache retention policy, not by this repository.
 
@@ -262,7 +262,7 @@ At a high level, the import does four things:
 More concretely:
 
 - the prep job writes the config file, restores `.index-store`, and runs `repo-mind-light index --result-json ...`
-- the structured JSON result determines whether a refreshed cache key should be saved
+- the structured JSON result determines whether any source refreshed and therefore whether a refreshed cache key should be saved
 - the agent job downloads the prepared index artifact, starts the MCP server, and waits on `/preload-status`
 - the import exposes only the `query` tool to the agent from the Repo Mind Light server
 - the import sets shared tool timeout values of `600` seconds for startup and tool execution
