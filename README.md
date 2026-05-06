@@ -140,7 +140,7 @@ conversations:
   discussion_categories: null
   ignore_bot_authored: true
 
-wiki: null                      # set to {} or a config object to enable wiki indexing
+wiki: null                      # optional; set to {} or a config object to enable wiki indexing
 
 query:
   preload_query_sources_on_startup: true
@@ -165,9 +165,29 @@ Important schema notes for workflow authors and agents:
 - `discussion_state` accepts `all`, `none`, or `null`.
 - `issue_labels`, `pr_labels`, and `discussion_categories` are optional any-of filters.
 - `ignore_bot_authored: true` is usually a good default for support and triage workflows.
-- `wiki: null` disables wiki indexing; set `wiki: {}` to enable wiki indexing with default path filters.
+- Wiki indexing is opt-in. `wiki: null` disables wiki indexing and wiki query sources.
+- `wiki: {}` enables GitHub wiki indexing with Repo Mind Light's default path filters for common text formats and skipped sidebar/footer pages.
+- `wiki.include_paths` keeps only wiki pages matching at least one glob, and `wiki.exclude_paths` skips pages matching any configured glob.
+- File extension filtering should be expressed with `wiki.include_paths` patterns such as `*.md` and `*.markdown`.
+- Wiki pages are refreshed incrementally and re-embedded only when their Git blob SHA changes.
 - `query.preload_query_sources_on_startup: true` reduces first-query latency by warming preloadable sources after server startup.
 - `query.code_search.enabled` lets Repo Mind Light use its code-search-backed retrieval path when available.
+
+Example wiki indexing configuration:
+
+```yaml
+wiki:
+  include_paths:
+    - "*.md"
+    - "*.markdown"
+    - "*.rst"
+    - "*.txt"
+    - "*.textile"
+    - "*.org"
+  exclude_paths:
+    - "_Sidebar.*"
+    - "_Footer.*"
+```
 
 ## Query Behavior
 

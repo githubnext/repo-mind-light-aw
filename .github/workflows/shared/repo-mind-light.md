@@ -49,7 +49,7 @@
 #     pr_labels: null                         # optional any-of filter
 #     discussion_categories: null             # optional any-of filter
 #     ignore_bot_authored: true
-#   wiki: null                                # set to {} or a config object to enable wiki indexing
+#   wiki: null                                # opt-in; set to {} or filters to index GitHub wiki pages
 #   query:
 #     preload_query_sources_on_startup: true
 #     graph_rag_zero:
@@ -61,6 +61,11 @@
 #     code_search:
 #       enabled: true
 #       limit: 50
+#
+# Wiki indexing is disabled by default. `wiki: {}` enables GitHub wiki indexing
+# with Repo Mind Light's default path filters for common text formats and skips
+# sidebar/footer pages. Use `wiki.include_paths` and `wiki.exclude_paths` glob
+# lists to narrow which wiki pages are cloned, embedded, and made queryable.
 #
 # Query guidance:
 # - Prefer one focused `query` over broad exploratory prompting.
