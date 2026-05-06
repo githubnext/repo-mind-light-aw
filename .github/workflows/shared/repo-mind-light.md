@@ -160,8 +160,12 @@ jobs:
           REPO_MIND_LIGHT_CONFIG_MAP: ${{ github.aw.import-inputs.config }}
         run: |
           set -euo pipefail
-          config_yaml="${REPO_MIND_LIGHT_CONFIG_MAP#map[yaml:}"
-          config_yaml="${config_yaml%]}"
+          if printf '%s' "$REPO_MIND_LIGHT_CONFIG_MAP" | jq -e . >/dev/null 2>&1; then
+            config_yaml="$(printf '%s' "$REPO_MIND_LIGHT_CONFIG_MAP" | jq -re '.yaml | select(type == "string")')"
+          else
+            config_yaml="${REPO_MIND_LIGHT_CONFIG_MAP#map[yaml:}"
+            config_yaml="${config_yaml%]}"
+          fi
           printf '%s\n' "$config_yaml" > .repo-mind-light.config.yml
 
       - name: Restore Repo Mind Light index cache
@@ -276,8 +280,12 @@ pre-agent-steps:
       REPO_MIND_LIGHT_CONFIG_MAP: ${{ github.aw.import-inputs.config }}
     run: |
       set -euo pipefail
-      config_yaml="${REPO_MIND_LIGHT_CONFIG_MAP#map[yaml:}"
-      config_yaml="${config_yaml%]}"
+      if printf '%s' "$REPO_MIND_LIGHT_CONFIG_MAP" | jq -e . >/dev/null 2>&1; then
+        config_yaml="$(printf '%s' "$REPO_MIND_LIGHT_CONFIG_MAP" | jq -re '.yaml | select(type == "string")')"
+      else
+        config_yaml="${REPO_MIND_LIGHT_CONFIG_MAP#map[yaml:}"
+        config_yaml="${config_yaml%]}"
+      fi
       printf '%s\n' "$config_yaml" > .repo-mind-light.config.yml
 
   - name: Start Repo Mind Light MCP server
