@@ -13,7 +13,7 @@
 # 4. prompt guidance telling the agent to use Repo Mind Light first
 #
 # Operational summary:
-# - Consumer workflows provide a Repo Mind Light config via `config-yaml`.
+# - Consumer workflows provide a Repo Mind Light config via `config.yaml`.
 # - This shared workflow writes that config to `.repo-mind-light.config.yml`.
 # - The prep job restores or refreshes `.index-store` and uploads it as an
 #   artifact for the agent job.
@@ -35,18 +35,21 @@
 # - Keep event-specific gating policy in the consumer workflow and pass it through
 #   the `run-if` input when Repo Mind Light should only run for selected events.
 #
-# Recommended `config-yaml` fields for most workflows:
+# Recommended `config.yaml` fields for most workflows:
 #
 #   slug: owner/repo                           # required
 #   store_path: /var/lib/repo-mind-light/index
 #   refresh_if_older_than: 1d                 # always | never | 3600 | 15m | 6h | 1d
-#   indexing:
+#   conversations:
 #     keep_count: 1000
 #     issue_state: all                        # open | closed | all | none | null
 #     pr_state: all                           # open | closed | merged | all | none | null
+#     discussion_state: all                   # all | none | null
 #     issue_labels: null                      # optional any-of filter
 #     pr_labels: null                         # optional any-of filter
+#     discussion_categories: null             # optional any-of filter
 #     ignore_bot_authored: true
+#   wiki: null                                # set to {} or a config object to enable wiki indexing
 #   query:
 #     preload_query_sources_on_startup: true
 #     graph_rag_zero:
@@ -85,7 +88,7 @@ import-schema:
           Full Repo Mind Light YAML configuration content. The workflow writes
           this to .repo-mind-light.config.yml in both the prep job and the
           agent job. Typical fields include slug, refresh_if_older_than,
-          indexing filters, and query settings.
+          conversations filters, optional wiki settings, and query settings.
   image:
     type: string
     required: false
@@ -366,7 +369,7 @@ Use Repo Mind Light for repository-context retrieval before falling back to broa
 
 This import exposes a repository-scoped `query` tool through the `repo-mind` MCP server.
 
-The server reads from an index built from the repository configured in `config-yaml`.
+The server reads from an index built from the repository configured in `config.yaml`.
 
 ## Required Usage Pattern
 

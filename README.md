@@ -130,13 +130,17 @@ store_path: /var/lib/repo-mind-light/index
 chat_model: claude-sonnet-4.6
 refresh_if_older_than: 1d
 
-indexing:
+conversations:
   keep_count: 1000
-  issue_state: all
-  pr_state: all
+  issue_state: all              # null | none | open | closed | all
+  pr_state: all                 # null | none | open | closed | merged | all
+  discussion_state: all         # null | none | all
   issue_labels: null
   pr_labels: null
+  discussion_categories: null
   ignore_bot_authored: true
+
+wiki: null                      # set to {} or a config object to enable wiki indexing
 
 query:
   preload_query_sources_on_startup: true
@@ -155,10 +159,13 @@ Important schema notes for workflow authors and agents:
 
 - `slug` is the only required Repo Mind Light field.
 - `refresh_if_older_than` controls whether cached indexes are reused or refreshed.
+- `conversations` controls issue, pull request, and discussion indexing. The legacy `indexing` key is still accepted by Repo Mind Light, but new workflows should use `conversations`.
 - `issue_state` accepts `open`, `closed`, `all`, `none`, or `null`.
 - `pr_state` accepts `open`, `closed`, `merged`, `all`, `none`, or `null`.
-- `issue_labels` and `pr_labels` are optional any-of filters.
+- `discussion_state` accepts `all`, `none`, or `null`.
+- `issue_labels`, `pr_labels`, and `discussion_categories` are optional any-of filters.
 - `ignore_bot_authored: true` is usually a good default for support and triage workflows.
+- `wiki: null` disables wiki indexing; set `wiki: {}` to enable wiki indexing with default path filters.
 - `query.preload_query_sources_on_startup: true` reduces first-query latency by warming preloadable sources after server startup.
 - `query.code_search.enabled` lets Repo Mind Light use its code-search-backed retrieval path when available.
 
