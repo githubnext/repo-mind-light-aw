@@ -24,7 +24,7 @@ Repo Mind Light provides holistic repository understanding over GitHub repositor
 It is designed to answer questions such as:
 
 - what parts of the repository are relevant to this feature or problem
-- what historical issues or pull requests are related
+- what historical issues, pull requests, or discussions are related
 - what architectural or implementation decisions shaped the current state
 - what code areas are likely to matter for a given symptom or topic
 
@@ -36,6 +36,8 @@ The final answer can combine evidence from:
 
 - indexed issues
 - indexed pull requests
+- indexed discussions
+- indexed wiki pages (when wiki indexing is enabled)
 - repository content already captured in the Repo Mind Light index
 - GitHub code search results used to mine relevant code snippets
 
@@ -62,7 +64,7 @@ It is a good fit for workflows such as:
 
 - holistic repository understanding
 - high-level architectural analysis
-- historical investigation across issues, pull requests, and code
+- historical investigation across issues, pull requests, discussions, and code
 - workflows that need repository-specific context before taking another action
 - workflows that need help locating relevant subsystems, past decisions, or strongly related code
 
