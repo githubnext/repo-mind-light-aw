@@ -119,6 +119,7 @@ The shared workflow accepts these inputs:
 - `cache-restore-key`: optional restore key for the index cache.
 - `container-name`: optional Docker container name for the MCP server.
 - `artifact-name`: optional artifact base name for the prepared index.
+- `run-if`: optional GitHub Actions expression that gates the Repo Mind Light prep job. Defaults to `true`. When the expression evaluates to false, the prep job and the dependent agent job are both skipped.
 
 These inputs are intentionally narrow. Most behavioral tuning happens inside `config.yaml`, which is passed through directly to Repo Mind Light.
 
@@ -129,7 +130,7 @@ The most important underlying Repo Mind Light configuration fields are:
 ```yaml
 slug: owner/repo
 store_path: /var/lib/repo-mind-light/index
-chat_model: claude-sonnet-4.6
+chat_model: claude-sonnet-4.6           # or gpt-5.4
 refresh_if_older_than: 1d
 
 conversations:
@@ -160,6 +161,7 @@ query:
 Important schema notes for workflow authors and agents:
 
 - `slug` is the only required Repo Mind Light field.
+- `chat_model` controls which generative model is used for final answer synthesis. Accepted values are `claude-sonnet-4.6` and `gpt-5.4`. Defaults to `claude-sonnet-4.6`.
 - `refresh_if_older_than` controls whether cached indexes are reused or refreshed.
 - `conversations` controls issue, pull request, and discussion indexing. The legacy `indexing` key is still accepted by Repo Mind Light, but new workflows should use `conversations`.
 - `issue_state` accepts `open`, `closed`, `all`, `none`, or `null`.
