@@ -35,6 +35,12 @@
 # - Use a runner with Docker, `jq`, `curl`, and the ability to bind port 8000.
 # - Keep event-specific gating policy in the consumer workflow and pass it through
 #   the `run-if` input when Repo Mind Light should only run for selected events.
+# - Set `sandbox.mcp.env.MCP_GATEWAY_TOOL_TIMEOUT` in each consumer workflow for
+#   the MCP gateway read timeout. `tools.timeout` and `tools.startup-timeout`
+#   control agent-side tool execution and startup waits.
+# - Mention Repo Mind Light explicitly in the consumer workflow's task prompt
+#   when it should be a required evidence source. This import injects generic
+#   tool guidance, but workflow-specific instructions make usage more reliable.
 #
 # Recommended `config.yaml` fields for most workflows:
 #
@@ -76,6 +82,8 @@
 #   warming preloadable sources after server startup.
 # - The `query` tool is for repository-context retrieval, not arbitrary remote
 #   browsing.
+# - Consumer prompts should say when Repo Mind Light is required, what evidence
+#   to ask for, and how to handle no useful matches.
 
 import-schema:
   config:
@@ -416,4 +424,5 @@ The server reads from an index built from the repository configured in `config.y
 - Startup and runtime logs are written under `/tmp/gh-aw/mcp-logs/` for debugging.
 - Use Repo Mind Light when you need repository-local context such as similar incidents, relevant code areas, ownership hints, or related implementation history.
 - Prefer focused, discriminating queries over broad prompts.
+- Consumer workflows should still mention Repo Mind Light explicitly in their own task instructions when they require it as an evidence source; this shared prompt guidance is a baseline, not a substitute for workflow-specific direction.
 - This shared import enables Repo Mind Light for the whole workflow by default. If a consumer needs event-specific gating, pass a GitHub Actions expression through the `run-if` input.

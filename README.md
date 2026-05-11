@@ -15,7 +15,7 @@ The content here is written for two audiences at the same time:
 - Repo Mind Light index preparation and artifact handoff
 - MCP server startup, preload readiness checks, and cleanup
 - Shared prompt guidance that tells agents to use Repo Mind Light first
-- Shared Repo Mind Light tool timeout configuration
+- Shared Repo Mind Light tool timeout configuration, plus documented consumer-side MCP gateway timeout settings
 
 ## What Repo Mind Light Does
 
@@ -90,6 +90,18 @@ imports:
 Then add consumer-specific permissions, GitHub tool settings, safe outputs, and task instructions in your own workflow.
 
 For stability-sensitive consumers, prefer pinning the import to a commit SHA or release tag instead of `@main`.
+
+Each consumer workflow should configure the MCP gateway timeout directly:
+
+```yaml
+sandbox:
+  mcp:
+    # Repo Mind Light queries can run longer than the current MCP gateway default.
+    env:
+      MCP_GATEWAY_TOOL_TIMEOUT: "300"
+```
+
+The shared workflow sets `tools.timeout` and `tools.startup-timeout`, which control agent-side tool execution and startup waits. The MCP gateway read timeout is configured through `sandbox.mcp.env.MCP_GATEWAY_TOOL_TIMEOUT` in the consuming workflow.
 
 ## Cost And Model Considerations
 
@@ -206,6 +218,14 @@ Good query patterns include:
 
 Agents should prefer precise, discriminating prompts over broad prompts such as "tell me about this repo".
 
+The shared workflow injects baseline prompt guidance that describes the `repo-mind` MCP server and its `query` tool. Consumer workflows should still call out Repo Mind Light explicitly in their own task instructions when they expect it to influence the answer or action. Be concrete about whether Repo Mind Light is required, what kind of evidence to ask for, how many queries to make, and how the agent should report weak or missing matches.
+
+For example:
+
+```markdown
+Use Repo Mind Light for repository-context retrieval before deciding. Make one focused `query` request using the issue title, error message, affected feature, or suspected subsystem. Make at most one follow-up query if a specific gap remains. Treat Repo Mind Light as supporting evidence; if it returns no useful matches, say that explicitly and continue with GitHub-based evidence.
+```
+
 ## Retention, Caching, And Artifacts
 
 This shared workflow has several storage behaviors that matter operationally:
@@ -252,6 +272,7 @@ Consumers should also ensure:
 - the runner can bind port `8000` for the Repo Mind Light MCP server
 - `jq` and `curl` are available on the runner image used by gh-aw jobs
 - enough disk space exists for the prepared index and temporary result files
+- the consumer workflow sets `sandbox.mcp.env.MCP_GATEWAY_TOOL_TIMEOUT` for the MCP gateway read timeout
 
 ## What The Shared Workflow Does
 
@@ -268,7 +289,8 @@ More concretely:
 - the structured JSON result determines whether any source refreshed and therefore whether a refreshed cache key should be saved
 - the agent job downloads the prepared index artifact, starts the MCP server, and waits on `/preload-status`
 - the import exposes only the `query` tool to the agent from the Repo Mind Light server
-- the import sets shared tool timeout values of `600` seconds for startup and tool execution
+- the import sets shared tool timeout values of `600` seconds for startup and agent tool execution
+- consumer workflows set `sandbox.mcp.env.MCP_GATEWAY_TOOL_TIMEOUT` for the MCP gateway read timeout
 
 ## Operational Constraints
 
