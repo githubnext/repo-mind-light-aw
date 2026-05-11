@@ -119,6 +119,7 @@ The shared workflow accepts these inputs:
 - `cache-restore-key`: optional restore key for the index cache.
 - `container-name`: optional Docker container name for the MCP server.
 - `artifact-name`: optional artifact base name for the prepared index.
+- `run-if`: optional GitHub Actions expression evaluated as the prep job condition. Defaults to `true`. Pass an event or label condition to skip Repo Mind Light for irrelevant triggers.
 
 These inputs are intentionally narrow. Most behavioral tuning happens inside `config.yaml`, which is passed through directly to Repo Mind Light.
 
