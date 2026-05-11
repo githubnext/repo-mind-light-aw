@@ -108,11 +108,10 @@ import-schema:
   image:
     type: string
     required: false
-    default: ghcr.io/githubnext/repo-mind-light:latest
+    default: ghcr.io/githubnext/repo-mind-light@sha256:bebe617c092bf1ed38754fa91f717e55d03e802d2372f2d72e2edad40442e864
     description: >
-      Repo Mind Light container image reference. Defaults to the latest
-      published Repo Mind Light image. Override this to pin a specific release
-      or test a different image intentionally.
+      Repo Mind Light container image reference. Override this to use a newer
+      release or test a different image intentionally.
   cache-prefix:
     type: string
     required: false

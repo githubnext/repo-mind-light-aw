@@ -249,7 +249,7 @@ Consuming workflows should provide:
 
 The shared workflow expects to use the public Repo Mind Light image published at `ghcr.io/githubnext/repo-mind-light` unless the `image` input overrides it.
 
-By default, the shared workflow tracks `ghcr.io/githubnext/repo-mind-light:latest` so it picks up the current published release. Consumers that need stricter reproducibility should override `image` with an explicit tag or digest.
+Consumers can override `image` with a newer release tag when they need to move independently of the shared workflow default.
 
 Consumers that only need Repo Mind Light for some events can pass a GitHub Actions expression through `run-if`. The expression is applied to the Repo Mind Light prep job; when it is false, the dependent agent job is skipped too.
 
