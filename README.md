@@ -77,7 +77,7 @@ Import the shared workflow from a consuming gh-aw workflow:
 
 ```yaml
 imports:
-  - uses: githubnext/repo-mind-light-aw/.github/workflows/shared/repo-mind-light.md@main
+  - uses: githubnext/repo-mind-light-aw/.github/workflows/shared/repo-mind-light.md@<commit-sha>
     with:
       config:
         yaml: |
@@ -90,7 +90,7 @@ imports:
 
 Then add consumer-specific permissions, GitHub tool settings, safe outputs, and task instructions in your own workflow.
 
-For stability-sensitive consumers, prefer pinning the import to a commit SHA or release tag instead of `@main`.
+Always pin the shared workflow import to a commit SHA. Do not use a moving ref such as `@main` in consuming workflows.
 
 Each consumer workflow should configure the MCP gateway timeout directly:
 
@@ -255,7 +255,7 @@ Consumers that only need Repo Mind Light for some events can pass a GitHub Actio
 
 ```yaml
 imports:
-  - uses: githubnext/repo-mind-light-aw/.github/workflows/shared/repo-mind-light.md@main
+  - uses: githubnext/repo-mind-light-aw/.github/workflows/shared/repo-mind-light.md@<commit-sha>
     with:
       run-if: >-
         github.event_name == 'workflow_dispatch' ||
