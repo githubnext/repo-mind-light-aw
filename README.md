@@ -47,9 +47,10 @@ The intended usage pattern is:
 
 1. prepare or restore an index for the target repository
 2. start the Repo Mind Light MCP server against that index
-3. ask one focused `query`
-4. ask at most one follow-up `query` if a specific gap remains
-5. only then fall back to broader GitHub or repository exploration
+3. use task-provided context, such as an issue body, error message, downloaded data, or candidate theme, to form a focused query
+4. ask one focused `query` before broad repository exploration or final decisions
+5. ask at most one follow-up `query` if a specific gap remains
+6. only then fall back to broader GitHub or repository exploration
 
 ## Repository Layout
 
@@ -223,7 +224,7 @@ The shared workflow injects baseline prompt guidance that describes the `repo-mi
 For example:
 
 ```markdown
-Use Repo Mind Light for repository-context retrieval before deciding. Make one focused `query` request using the issue title, error message, affected feature, or suspected subsystem. Make at most one follow-up query if a specific gap remains. Treat Repo Mind Light as supporting evidence; if it returns no useful matches, say that explicitly and continue with GitHub-based evidence.
+Use the task-provided context, such as the issue title, error message, downloaded issue data, affected feature, or suspected subsystem, to form a focused Repo Mind Light query. Query Repo Mind Light before broad repository exploration or final decisions. Make at most one follow-up query if a specific gap remains. Treat Repo Mind Light as supporting evidence; if it returns no useful matches, say that explicitly and continue with GitHub-based evidence.
 ```
 
 ## Retention, Caching, And Artifacts

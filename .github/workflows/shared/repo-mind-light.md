@@ -75,9 +75,11 @@
 # lists to narrow which wiki pages are cloned, embedded, and made queryable.
 #
 # Query guidance:
-# - Prefer one focused `query` over broad exploratory prompting.
-# - Best inputs are exact errors, feature names, ownership hints, or requests
-#   for similar regressions and concrete relevant code areas.
+# - Use task-provided context to form a focused query before broad repository
+#   exploration or final decisions.
+# - Good inputs are exact errors, feature names, ownership hints, downloaded
+#   issue data, candidate themes, or requests for similar regressions and
+#   concrete relevant code areas.
 # - `preload_query_sources_on_startup: true` reduces first-query latency by
 #   warming preloadable sources after server startup.
 # - The `query` tool is for repository-context retrieval, not arbitrary remote
@@ -405,7 +407,7 @@ post-steps:
 
 # Repo Mind Light
 
-Use Repo Mind Light for repository-context retrieval before falling back to broad repo exploration.
+Use Repo Mind Light for repository-context retrieval before broad repo exploration or final decisions.
 
 This import exposes a repository-scoped `query` tool through the `repo-mind` MCP server.
 
@@ -413,10 +415,10 @@ The server reads from an index built from the repository configured in `config.y
 
 ## Required Usage Pattern
 
-1. Make one focused `query` request first.
-2. If the first result is sufficient, do not issue more Repo Mind Light queries.
-3. Make at most one follow-up `query` only when the first result leaves a specific gap that matters to the task.
-4. Use other tools only after Repo Mind Light has established the relevant local context.
+1. Use task-provided context, such as an issue body, error message, downloaded data, or candidate theme, to form a focused query.
+2. Make one focused `query` request before broad repository exploration or final decisions.
+3. If the first result is sufficient, do not issue more Repo Mind Light queries.
+4. Make at most one follow-up `query` only when the first result leaves a specific gap that matters to the task.
 
 ## Notes
 
