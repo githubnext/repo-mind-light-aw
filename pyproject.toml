@@ -1,6 +1,6 @@
 [project]
 name = "repo-mind-light-aw"
-version = "0.0.0"
+version = "1.0.0"
 description = "Agentic Workflow shared workflow packaging for Repo Mind Light."
 readme = "README.md"
 license = { text = "MIT" }
