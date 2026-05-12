@@ -308,7 +308,7 @@ Agents and workflow authors should assume the following constraints:
 To validate the shared workflow locally:
 
 ```bash
-gh aw compile .github/workflows/shared/repo-mind-light.md
+gh aw validate .github/workflows/shared/repo-mind-light.md
 ```
 
 To validate end-to-end behavior, import it into a consumer workflow and compile that consumer workflow as well.
@@ -323,6 +323,44 @@ For real validation, also exercise:
 ## Relationship To Repo Mind Light
 
 This repository is the gh-aw integration surface for Repo Mind Light.
+
+## Releases And Versioning
+
+This repository releases the shared workflow contract, not the Repo Mind Light
+application implementation. Releases are created manually from the `Release`
+GitHub Actions workflow on `main`.
+
+The release workflow:
+
+1. validates `.github/workflows/shared/repo-mind-light.md` with `gh aw validate`
+2. uses conventional commits and `python-semantic-release` to choose the next SemVer version
+3. updates `CHANGELOG.md` and `pyproject.toml`
+4. creates and pushes the release commit and `vX.Y.Z` tag
+5. creates the GitHub Release
+6. writes a consumer import snippet to the workflow summary
+
+Use conventional commits to control the automatic release level:
+
+- `feat:` creates a minor release
+- `fix:` and `perf:` create a patch release
+- `BREAKING CHANGE:` or `!` creates a major release
+
+The workflow also has a manual `bump` input for forcing `patch`, `minor`, or
+`major` when the release needs an explicit operator decision, plus a `dry-run`
+input for previewing the computed release without creating anything.
+
+Consumers should use GitHub Releases and tags to discover new versions, but keep
+their shared workflow import pinned to the immutable release commit SHA:
+
+```yaml
+# repo-mind-light-aw: v1.0.0
+# https://github.com/githubnext/repo-mind-light-aw/releases/tag/v1.0.0
+imports:
+  - uses: githubnext/repo-mind-light-aw/.github/workflows/shared/repo-mind-light.md@<release-commit-sha>
+```
+
+This gives consumers a visible version marker for update automation and review,
+while keeping workflow execution reproducible.
 
 ## License
 

@@ -1,0 +1,156 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Release bump to force, or auto to infer from conventional commits
+        required: true
+        default: auto
+        type: choice
+        options:
+          - auto
+          - patch
+          - minor
+          - major
+      dry-run:
+        description: Compute the release without committing, tagging, or publishing
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install release dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install python-semantic-release==10.5.3
+
+      - name: Install gh-aw CLI
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if ! gh aw --version >/dev/null 2>&1; then
+            gh extension install github/gh-aw
+          fi
+          gh aw --version
+
+      - name: Validate shared workflow
+        run: gh aw validate .github/workflows/shared/repo-mind-light.md --no-check-update
+
+      - name: Resolve release state before run
+        id: before
+        run: |
+          tag="$(semantic-release version --print-last-released-tag 2>/dev/null || true)"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Create release if needed
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ github.token }}
+          GIT_COMMIT_AUTHOR: ${{ format('{0} <{1}+{0}@users.noreply.github.com>', github.actor, github.actor_id) }}
+          BUMP: ${{ inputs.bump }}
+          DRY_RUN: ${{ inputs['dry-run'] }}
+        run: |
+          set -euo pipefail
+
+          command=(semantic-release)
+          if [ "$DRY_RUN" = "true" ]; then
+            command+=(--noop)
+          fi
+
+          version_args=(version --skip-build)
+          case "$BUMP" in
+            auto) ;;
+            patch|minor|major) version_args+=("--$BUMP") ;;
+            *)
+              echo "Unsupported bump: $BUMP" >&2
+              exit 1
+              ;;
+          esac
+
+          "${command[@]}" "${version_args[@]}"
+
+      - name: Resolve release state after run
+        id: after
+        if: inputs['dry-run'] != true
+        run: |
+          tag="$(semantic-release version --print-last-released-tag)"
+          sha=""
+          if [ -n "$tag" ]; then
+            sha="$(git rev-list -n 1 "$tag")"
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+
+      - name: Ensure GitHub release exists
+        if: inputs['dry-run'] != true && steps.after.outputs.tag != '' && steps.after.outputs.tag != steps.before.outputs.tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.after.outputs.tag }}
+        run: |
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            echo "GitHub release already exists for $RELEASE_TAG"
+            exit 0
+          fi
+
+          gh release create "$RELEASE_TAG" \
+            --verify-tag \
+            --title "$RELEASE_TAG" \
+            --generate-notes
+
+      - name: Summarize release
+        if: always()
+        env:
+          BEFORE_TAG: ${{ steps.before.outputs.tag }}
+          AFTER_TAG: ${{ steps.after.outputs.tag }}
+          RELEASE_SHA: ${{ steps.after.outputs.sha }}
+          DRY_RUN: ${{ inputs['dry-run'] }}
+        run: |
+          {
+            echo "## Release"
+            echo
+            if [ "$DRY_RUN" = "true" ]; then
+              computed_tag="$(semantic-release --noop version --print-tag 2>/dev/null || true)"
+              echo "Dry run completed. No commit, tag, or GitHub release was created."
+              if [ -n "$computed_tag" ]; then
+                echo "Computed next release tag: $computed_tag."
+              fi
+            elif [ -z "$AFTER_TAG" ]; then
+              echo "No release tag was resolved."
+            elif [ "$AFTER_TAG" = "$BEFORE_TAG" ]; then
+              echo "No new release was created. Latest release remains $AFTER_TAG."
+            else
+              echo "Created release $AFTER_TAG."
+              echo
+              echo "Consumer import snippet:"
+              echo '```yaml'
+              echo "# repo-mind-light-aw: $AFTER_TAG"
+              echo "# https://github.com/githubnext/repo-mind-light-aw/releases/tag/$AFTER_TAG"
+              echo "imports:"
+              echo "  - uses: githubnext/repo-mind-light-aw/.github/workflows/shared/repo-mind-light.md@$RELEASE_SHA"
+              echo '```'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
