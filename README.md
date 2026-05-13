@@ -143,7 +143,7 @@ The most important underlying Repo Mind Light configuration fields are:
 ```yaml
 slug: owner/repo
 store_path: /var/lib/repo-mind-light/index
-chat_model: claude-sonnet-4.6
+chat_model: claude-sonnet-4.6  # or gpt-5.4
 refresh_if_older_than: 1d
 
 conversations:
