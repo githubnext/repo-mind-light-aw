@@ -79,6 +79,7 @@ Import the shared workflow from a consuming gh-aw workflow:
 imports:
   - uses: githubnext/repo-mind-light-aw/.github/workflows/shared/repo-mind-light.md@<commit-sha>
     with:
+      copilot-github-token: ${{ secrets.REPO_MIND_LIGHT_COPILOT_TOKEN }}
       config:
         yaml: |
           slug: ${{ github.repository }}
@@ -91,6 +92,10 @@ imports:
 Then add consumer-specific permissions, GitHub tool settings, safe outputs, and task instructions in your own workflow.
 
 Always pin the shared workflow import to a commit SHA. Do not use a moving ref such as `@main` in consuming workflows.
+
+The `copilot-github-token` input is optional. If omitted, the shared workflow falls back to `secrets.COPILOT_GITHUB_TOKEN`. Pass it when the default ambient token is missing or is not the token you want Repo Mind Light to use for model calls.
+
+The token supplied through `copilot-github-token` is exported inside the Repo Mind Light indexing and MCP server steps as `COPILOT_GITHUB_TOKEN`. Use a fine-grained access token with read permission for **Models** so Repo Mind Light can call the embedding model and answer-generation model.
 
 Each consumer workflow should configure the MCP gateway timeout directly:
 
@@ -128,6 +133,7 @@ The shared workflow accepts these inputs:
 - `config`: Repo Mind Light configuration object. Required.
 - `config.yaml`: full Repo Mind Light configuration content stored under the required `yaml` property.
 - `image`: optional Repo Mind Light container image override.
+- `copilot-github-token`: optional token value used as `COPILOT_GITHUB_TOKEN` for Repo Mind Light indexing and query-time model calls. Defaults to `secrets.COPILOT_GITHUB_TOKEN` when omitted. Use a fine-grained access token with **Models: read** permission.
 - `cache-prefix`: optional prefix for refreshed cache keys.
 - `cache-restore-key`: optional restore key for the index cache.
 - `container-name`: optional Docker container name for the MCP server.
@@ -243,7 +249,7 @@ This means the workflow gives consumers short-lived artifact handoff plus reusab
 
 Consuming workflows should provide:
 
-- `COPILOT_GITHUB_TOKEN` so Repo Mind Light can call Copilot model endpoints for embeddings and final answer generation
+- `COPILOT_GITHUB_TOKEN`, or the shared workflow `copilot-github-token` input, so Repo Mind Light can call Copilot model endpoints for embeddings and final answer generation. The token must be a fine-grained access token with **Models: read** permission.
 - GitHub read permissions appropriate for the repository data being indexed
 - Docker support on the runner used by the workflow
 
