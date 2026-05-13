@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.1.1 (2026-05-13)
+
+### Bug Fixes
+
+- Make Repo Mind Light token input substitutable
+  ([`9fe563d`](https://github.com/githubnext/repo-mind-light-aw/commit/9fe563d1f623bfba0430ec42faed0ca30a35cbf7))
+
+
 ## v1.1.0 (2026-05-13)
 
 ### Features
