@@ -117,7 +117,7 @@ import-schema:
   copilot-github-token:
     type: string
     required: false
-    default: ''
+    default: ${{ secrets.COPILOT_GITHUB_TOKEN }}
     description: >
       Optional token value to pass to Repo Mind Light as COPILOT_GITHUB_TOKEN.
       Use this when the ambient COPILOT_GITHUB_TOKEN secret is absent or does
@@ -209,7 +209,7 @@ jobs:
       - name: Run incremental indexing
         id: incremental-index
         env:
-          COPILOT_GITHUB_TOKEN: ${{ github.aw.import-inputs.copilot-github-token || secrets.COPILOT_GITHUB_TOKEN }}
+          COPILOT_GITHUB_TOKEN: ${{ github.aw.import-inputs.copilot-github-token }}
           GITHUB_TOKEN: ${{ github.token }}
           REPO_MIND_LIGHT_CONFIG: /tmp/repo-mind-light.config.yml
           REPO_MIND_LIGHT_CACHE_PREFIX: ${{ github.aw.import-inputs.cache-prefix }}
@@ -328,7 +328,7 @@ pre-agent-steps:
 
   - name: Start Repo Mind Light MCP server
     env:
-      COPILOT_GITHUB_TOKEN: ${{ github.aw.import-inputs.copilot-github-token || secrets.COPILOT_GITHUB_TOKEN }}
+      COPILOT_GITHUB_TOKEN: ${{ github.aw.import-inputs.copilot-github-token }}
       GITHUB_TOKEN: ${{ github.token }}
       REPO_MIND_LIGHT_CONTAINER_NAME: ${{ github.aw.import-inputs.container-name }}
       REPO_MIND_LIGHT_IMAGE: ${{ github.aw.import-inputs.image }}
