@@ -37,9 +37,8 @@
 # - Use a runner with Docker, `jq`, `curl`, and the ability to bind port 8000.
 # - Keep event-specific gating policy in the consumer workflow and pass it through
 #   the `run-if` input when Repo Mind Light should only run for selected events.
-# - Set `sandbox.mcp.env.MCP_GATEWAY_TOOL_TIMEOUT` in each consumer workflow for
-#   the MCP gateway read timeout. `tools.timeout` and `tools.startup-timeout`
-#   control agent-side tool execution and startup waits.
+# - This shared workflow configures both the MCP gateway read timeout and the
+#   agent-side tool execution/startup waits for long Repo Mind Light queries.
 # - Mention Repo Mind Light explicitly in the consumer workflow's task prompt
 #   when it should be a required evidence source. This import injects generic
 #   tool guidance, but workflow-specific instructions make usage more reliable.
@@ -296,6 +295,10 @@ mcp-servers:
     url: http://127.0.0.1:8000/mcp
     allowed:
       - query
+
+engine:
+  mcp:
+    tool-timeout: "10m"
 
 tools:
   timeout: 600

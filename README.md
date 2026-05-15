@@ -15,7 +15,7 @@ The content here is written for two audiences at the same time:
 - Repo Mind Light index preparation and artifact handoff
 - MCP server startup, preload readiness checks, and cleanup
 - Shared prompt guidance that tells agents to use Repo Mind Light first
-- Shared Repo Mind Light tool timeout configuration, plus documented consumer-side MCP gateway timeout settings
+- Shared Repo Mind Light MCP gateway and agent-side tool timeout configuration
 
 ## What Repo Mind Light Does
 
@@ -97,17 +97,7 @@ The `copilot-github-token` input is optional. If omitted, the shared workflow fa
 
 The token supplied through `copilot-github-token` is exported inside the Repo Mind Light indexing and MCP server steps as `COPILOT_GITHUB_TOKEN`. Provide a GitHub token bound to a user or organization identity. Machine-issued tokens, including the default `GITHUB_TOKEN` injected into GitHub Actions workflows, are not suitable for CAPI model calls.
 
-Each consumer workflow should configure the MCP gateway timeout directly:
-
-```yaml
-sandbox:
-  mcp:
-    # Repo Mind Light queries can run longer than the current MCP gateway default.
-    env:
-      MCP_GATEWAY_TOOL_TIMEOUT: "300"
-```
-
-The shared workflow sets `tools.timeout` and `tools.startup-timeout`, which control agent-side tool execution and startup waits. The MCP gateway read timeout is configured through `sandbox.mcp.env.MCP_GATEWAY_TOOL_TIMEOUT` in the consuming workflow.
+The shared workflow configures the MCP gateway read timeout with `engine.mcp.tool-timeout` and also sets `tools.timeout` and `tools.startup-timeout` for agent-side tool execution and startup waits. Consumers do not need to set `sandbox.mcp.env.MCP_GATEWAY_TOOL_TIMEOUT` for the default Repo Mind Light path.
 
 ## Cost And Model Considerations
 
