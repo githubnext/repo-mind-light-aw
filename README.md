@@ -269,7 +269,6 @@ Consumers should also ensure:
 - the runner can bind port `8000` for the Repo Mind Light MCP server
 - `jq` and `curl` are available on the runner image used by gh-aw jobs
 - enough disk space exists for the prepared index and temporary result files
-- the consumer workflow sets `sandbox.mcp.env.MCP_GATEWAY_TOOL_TIMEOUT` for the MCP gateway read timeout
 
 ## What The Shared Workflow Does
 
@@ -286,8 +285,7 @@ More concretely:
 - the structured JSON result determines whether any source refreshed and therefore whether a refreshed cache key should be saved
 - the agent job downloads the prepared index artifact, starts the MCP server, and waits on `/preload-status`
 - the import exposes only the `query` tool to the agent from the Repo Mind Light server
-- the import sets shared tool timeout values of `600` seconds for startup and agent tool execution
-- consumer workflows set `sandbox.mcp.env.MCP_GATEWAY_TOOL_TIMEOUT` for the MCP gateway read timeout
+- the import sets shared tool timeout values of `600` seconds for startup and agent tool execution and `10m` for the MCP gateway read timeout via `engine.mcp.tool-timeout`; consumers do not need to set `sandbox.mcp.env.MCP_GATEWAY_TOOL_TIMEOUT` for the default Repo Mind Light path
 
 ## Operational Constraints
 
