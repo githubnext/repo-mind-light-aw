@@ -28,11 +28,11 @@
 # - Cache eviction after that is controlled by GitHub Actions cache policy.
 #
 # Consumer responsibilities:
-# - Provide a token for `COPILOT_GITHUB_TOKEN`. Repo Mind Light itself uses
-#   Copilot-backed model access for embeddings and final answer synthesis,
-#   regardless of which outer agent engine the consumer workflow uses. If the
-#   ambient `COPILOT_GITHUB_TOKEN` is missing or lacks model access, pass a
-#   custom fine-grained token through `copilot-github-token`.
+# - Provide `COPILOT_GITHUB_TOKEN` as a GitHub token bound to a user or
+#   organization identity. Repo Mind Light uses CAPI model calls for embeddings
+#   and final answer synthesis, regardless of which outer agent engine the
+#   consumer workflow uses. The default Actions `GITHUB_TOKEN` is passed only
+#   for GitHub API reads and is not suitable for CAPI model calls.
 # - Provide GitHub read permissions suitable for the configured indexing scope.
 # - Use a runner with Docker, `jq`, `curl`, and the ability to bind port 8000.
 # - Keep event-specific gating policy in the consumer workflow and pass it through
@@ -110,7 +110,7 @@ import-schema:
   image:
     type: string
     required: false
-    default: ghcr.io/githubnext/repo-mind-light@sha256:e297865cada91f345269b91ee88bfd1915dbe153678976b521a504a4add47a75
+    default: ghcr.io/githubnext/repo-mind-light@sha256:6d159c10513f365250f46de421096f4e61cb7bb04d36e10db6b62714c523f822
     description: >
       Repo Mind Light container image reference. Override this to use a newer
       release or test a different image intentionally.
@@ -120,8 +120,8 @@ import-schema:
     default: ${{ secrets.COPILOT_GITHUB_TOKEN }}
     description: >
       Optional token value to pass to Repo Mind Light as COPILOT_GITHUB_TOKEN.
-      Use this when the ambient COPILOT_GITHUB_TOKEN secret is absent or does
-      not have the required fine-grained "models" read permission.
+      Use this when the ambient COPILOT_GITHUB_TOKEN secret is absent or when a
+      workflow needs to pass a different non-machine token for CAPI model calls.
   cache-prefix:
     type: string
     required: false
@@ -220,7 +220,7 @@ jobs:
           result_json_path="$result_json_dir/result.json"
 
           test -n "$COPILOT_GITHUB_TOKEN" || {
-            echo "COPILOT_GITHUB_TOKEN secret is required" >&2
+            echo "COPILOT_GITHUB_TOKEN must be set to a non-machine token for CAPI model calls" >&2
             exit 1
           }
 

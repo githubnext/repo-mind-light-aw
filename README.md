@@ -93,9 +93,9 @@ Then add consumer-specific permissions, GitHub tool settings, safe outputs, and 
 
 Always pin the shared workflow import to a commit SHA. Do not use a moving ref such as `@main` in consuming workflows.
 
-The `copilot-github-token` input is optional. If omitted, the shared workflow falls back to `secrets.COPILOT_GITHUB_TOKEN`. Pass it when the default ambient token is missing or is not the token you want Repo Mind Light to use for model calls.
+The `copilot-github-token` input is optional. If omitted, the shared workflow falls back to `secrets.COPILOT_GITHUB_TOKEN`. Pass it when the default ambient token is missing or is not the token you want Repo Mind Light to use for CAPI model calls.
 
-The token supplied through `copilot-github-token` is exported inside the Repo Mind Light indexing and MCP server steps as `COPILOT_GITHUB_TOKEN`. Use a fine-grained access token with read permission for **Models** so Repo Mind Light can call the embedding model and answer-generation model.
+The token supplied through `copilot-github-token` is exported inside the Repo Mind Light indexing and MCP server steps as `COPILOT_GITHUB_TOKEN`. Provide a GitHub token bound to a user or organization identity. Machine-issued tokens, including the default `GITHUB_TOKEN` injected into GitHub Actions workflows, are not suitable for CAPI model calls.
 
 Each consumer workflow should configure the MCP gateway timeout directly:
 
@@ -122,7 +122,7 @@ This is why the shared workflow requires `COPILOT_GITHUB_TOKEN`.
 
 Consumer workflows can still use another outer agent runtime such as Claude or Codex.
 
-The important constraint is not the outer workflow engine. The important constraint is that Repo Mind Light itself depends on Copilot-backed model access for embeddings and answer generation.
+The important constraint is not the outer workflow engine. The important constraint is that Repo Mind Light itself depends on CAPI model calls for embeddings and answer generation.
 
 So even when the surrounding workflow uses a non-Copilot engine, `COPILOT_GITHUB_TOKEN` still must be available to Repo Mind Light or indexing and query synthesis will not work.
 
@@ -133,7 +133,7 @@ The shared workflow accepts these inputs:
 - `config`: Repo Mind Light configuration object. Required.
 - `config.yaml`: full Repo Mind Light configuration content stored under the required `yaml` property.
 - `image`: optional Repo Mind Light container image override.
-- `copilot-github-token`: optional token value used as `COPILOT_GITHUB_TOKEN` for Repo Mind Light indexing and query-time model calls. Defaults to `secrets.COPILOT_GITHUB_TOKEN` when omitted. Use a fine-grained access token with **Models: read** permission.
+- `copilot-github-token`: optional token value used as `COPILOT_GITHUB_TOKEN` for Repo Mind Light indexing and query-time model calls. Defaults to `secrets.COPILOT_GITHUB_TOKEN` when omitted. Use a GitHub token bound to a user or organization identity; the default generated Actions token is not suitable for CAPI model calls.
 - `cache-prefix`: optional prefix for refreshed cache keys.
 - `cache-restore-key`: optional restore key for the index cache.
 - `container-name`: optional Docker container name for the MCP server.
@@ -249,7 +249,7 @@ This means the workflow gives consumers short-lived artifact handoff plus reusab
 
 Consuming workflows should provide:
 
-- `COPILOT_GITHUB_TOKEN`, or the shared workflow `copilot-github-token` input, so Repo Mind Light can call Copilot model endpoints for embeddings and final answer generation. The token must be a fine-grained access token with **Models: read** permission.
+- `COPILOT_GITHUB_TOKEN`, or the shared workflow `copilot-github-token` input, so Repo Mind Light can call CAPI model endpoints for embeddings and final answer generation. Use a GitHub token bound to a user or organization identity; the default generated Actions token is not suitable for CAPI model calls.
 - GitHub read permissions appropriate for the repository data being indexed
 - Docker support on the runner used by the workflow
 
