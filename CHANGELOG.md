@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.1.2 (2026-05-15)
+
+### Bug Fixes
+
+- Update Repo Mind Light CAPI token guidance
+  ([`cd6b673`](https://github.com/githubnext/repo-mind-light-aw/commit/cd6b67307ab9bd035ef94cf0e14052e8fcacf4bd))
+
+
 ## v1.1.1 (2026-05-13)
 
 ### Bug Fixes
