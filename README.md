@@ -165,6 +165,7 @@ query:
   code_search:
     enabled: true
     limit: 50
+  soma: null                    # optional; set graph_rag_zero: null and configure this to use Soma instead
 ```
 
 Important schema notes for workflow authors and agents:
@@ -184,6 +185,7 @@ Important schema notes for workflow authors and agents:
 - Wiki pages are refreshed incrementally and re-embedded only when their Git blob SHA changes.
 - `query.preload_query_sources_on_startup: true` reduces first-query latency by warming preloadable sources after server startup.
 - `query.code_search.enabled` lets Repo Mind Light use its code-search-backed retrieval path when available.
+- `query.graph_rag_zero` and `query.soma` are mutually exclusive local retrieval backends. Set `graph_rag_zero: null` and configure `soma` to use the embedding-free Soma backend. When only embedding-free sources are active, Repo Mind Light skips embedding API calls during indexing and querying; `COPILOT_GITHUB_TOKEN` is still required for answer generation and query rewriting.
 
 Example wiki indexing configuration:
 
