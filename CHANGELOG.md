@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.1.5 (2026-05-19)
+
+### Bug Fixes
+
+- Normalize index store permissions
+  ([`49f007b`](https://github.com/githubnext/repo-mind-light-aw/commit/49f007ba50dcd36c0d98fce5532bee97ba01117e))
+
+
 ## v1.1.4 (2026-05-19)
 
 ### Bug Fixes
