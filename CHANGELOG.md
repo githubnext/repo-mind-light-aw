@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.1.3 (2026-05-19)
+
+### Bug Fixes
+
+- Configure Repo Mind Light MCP timeout in shared workflow
+  ([`6c93b46`](https://github.com/githubnext/repo-mind-light-aw/commit/6c93b469c97238c8574e52f722fd1fa1defb2c23))
+
+- Makes use of the latest gh aw version to move MCP tool timeout to the shared workflow
+  ([`9416329`](https://github.com/githubnext/repo-mind-light-aw/commit/9416329aa35c0288c9fd69c023b1159cc0c8cafc))
+
+
 ## v1.1.2 (2026-05-15)
 
 ### Bug Fixes
