@@ -237,6 +237,9 @@ jobs:
             "$REPO_MIND_LIGHT_IMAGE" \
             index --result-json /tmp/repo-mind-light-result/result.json
 
+          sudo chown -R "$(id -u):$(id -g)" .index-store "$result_json_dir"
+          chmod -R u+rwX .index-store "$result_json_dir"
+
           test -f "$result_json_path" || {
             echo "Repo Mind Light did not write the structured result JSON" >&2
             exit 1
