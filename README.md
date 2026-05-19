@@ -97,7 +97,7 @@ The `copilot-github-token` input is optional. If omitted, the shared workflow fa
 
 The token supplied through `copilot-github-token` is exported inside the Repo Mind Light indexing and MCP server steps as `COPILOT_GITHUB_TOKEN`. Provide a GitHub token bound to a user or organization identity. Machine-issued tokens, including the default `GITHUB_TOKEN` injected into GitHub Actions workflows, are not suitable for CAPI model calls.
 
-The shared workflow configures the MCP gateway read timeout with `engine.mcp.tool-timeout` and also sets `tools.timeout` and `tools.startup-timeout` for agent-side tool execution and startup waits. Consumers do not need to set `sandbox.mcp.env.MCP_GATEWAY_TOOL_TIMEOUT` for the default Repo Mind Light path.
+The shared workflow configures the Repo Mind Light MCP gateway timeout through the reusable workflow itself. It imports `engine.mcp.tool-timeout: "10m"`, which gh-aw v0.74.4 and newer render as numeric gateway `toolTimeout` seconds, and sets `tools.timeout` plus `tools.startup-timeout` for agent-side tool execution and startup waits. Consumers do not need to set `sandbox.mcp.env.MCP_GATEWAY_TOOL_TIMEOUT` for the default Repo Mind Light path.
 
 ## Cost And Model Considerations
 
@@ -269,7 +269,7 @@ Consumers should also ensure:
 - the runner can bind port `8000` for the Repo Mind Light MCP server
 - `jq` and `curl` are available on the runner image used by gh-aw jobs
 - enough disk space exists for the prepared index and temporary result files
-- the consumer workflow sets `sandbox.mcp.env.MCP_GATEWAY_TOOL_TIMEOUT` for the MCP gateway read timeout
+- the consumer workflow is compiled with gh-aw v0.74.4 or newer, so imported `engine.mcp.tool-timeout` is rendered as numeric gateway `toolTimeout` seconds
 
 ## What The Shared Workflow Does
 
@@ -286,8 +286,8 @@ More concretely:
 - the structured JSON result determines whether any source refreshed and therefore whether a refreshed cache key should be saved
 - the agent job downloads the prepared index artifact, starts the MCP server, and waits on `/preload-status`
 - the import exposes only the `query` tool to the agent from the Repo Mind Light server
-- the import sets shared tool timeout values of `600` seconds for startup and agent tool execution
-- consumer workflows set `sandbox.mcp.env.MCP_GATEWAY_TOOL_TIMEOUT` for the MCP gateway read timeout
+- the import sets `repo-mind` MCP gateway, agent tool execution, and startup timeout values of `600` seconds
+- consumer workflows can override MCP timeout settings explicitly, but do not need the lower-level `sandbox.mcp.env.MCP_GATEWAY_TOOL_TIMEOUT` workaround for the default Repo Mind Light path
 
 ## Operational Constraints
 

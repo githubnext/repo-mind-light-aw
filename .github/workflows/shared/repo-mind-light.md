@@ -298,6 +298,7 @@ mcp-servers:
 
 engine:
   mcp:
+    # Imported by gh-aw v0.74.4+ and rendered to numeric gateway toolTimeout seconds.
     tool-timeout: "10m"
 
 tools:
