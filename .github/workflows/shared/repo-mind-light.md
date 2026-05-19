@@ -109,7 +109,7 @@ import-schema:
   image:
     type: string
     required: false
-    default: ghcr.io/githubnext/repo-mind-light@sha256:6d159c10513f365250f46de421096f4e61cb7bb04d36e10db6b62714c523f822
+    default: ghcr.io/githubnext/repo-mind-light@sha256:a30f27d60ed871e05da29c41d1707abd4cbb42e28f932a640ee79a4ed1b6c73e
     description: >
       Repo Mind Light container image reference. Override this to use a newer
       release or test a different image intentionally.
