@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.1.4 (2026-05-19)
+
+### Bug Fixes
+
+- Update repo mind light image
+  ([`f55a475`](https://github.com/githubnext/repo-mind-light-aw/commit/f55a475e5e46abbb62dbd2592dad97d61f09cfba))
+
+
 ## v1.1.3 (2026-05-19)
 
 ### Bug Fixes
