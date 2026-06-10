@@ -165,6 +165,7 @@ query:
   code_search:
     enabled: true
     limit: 50
+  soma: null                    # alternative embedding-free backend; set graph_rag_zero: null to enable
 ```
 
 Important schema notes for workflow authors and agents:
@@ -184,6 +185,7 @@ Important schema notes for workflow authors and agents:
 - Wiki pages are refreshed incrementally and re-embedded only when their Git blob SHA changes.
 - `query.preload_query_sources_on_startup: true` reduces first-query latency by warming preloadable sources after server startup.
 - `query.code_search.enabled` lets Repo Mind Light use its code-search-backed retrieval path when available.
+- `query.graph_rag_zero` and `query.soma` are mutually exclusive local retrieval backends. `graph_rag_zero` is embedding-based and enabled by default. `soma` is an embedding-free graph-structural backend available in the default public image. To use Soma, set `query.graph_rag_zero: null` and configure `query.soma: {}` (or a Soma config object).
 
 Example wiki indexing configuration:
 
