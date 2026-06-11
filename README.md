@@ -105,16 +105,18 @@ Using Repo Mind Light adds extra cost beyond the base gh-aw workflow run.
 
 That cost exists because Repo Mind Light:
 
-- computes embedding vectors during indexing and refresh
 - uses a generative model to produce the final `query` answer
+- computes embedding vectors during indexing and retrieval when using the default GraphRAG Zero backend
 
 This is why the shared workflow requires `COPILOT_GITHUB_TOKEN`.
 
 Consumer workflows can still use another outer agent runtime such as Claude or Codex.
 
-The important constraint is not the outer workflow engine. The important constraint is that Repo Mind Light itself depends on CAPI model calls for embeddings and answer generation.
+The important constraint is not the outer workflow engine. The important constraint is that Repo Mind Light itself depends on CAPI model calls for answer generation, and for embeddings when using the GraphRAG Zero backend.
 
 So even when the surrounding workflow uses a non-Copilot engine, `COPILOT_GITHUB_TOKEN` still must be available to Repo Mind Light or indexing and query synthesis will not work.
+
+When using the Soma backend with `query.graph_rag_zero: null`, Repo Mind Light skips embedding API calls entirely during both indexing and querying. A CAPI token is still required for answer generation.
 
 ## Inputs
 
@@ -139,7 +141,7 @@ The most important underlying Repo Mind Light configuration fields are:
 ```yaml
 slug: owner/repo
 store_path: /var/lib/repo-mind-light/index
-chat_model: claude-sonnet-4.6
+chat_model: claude-sonnet-4.6  # or gpt-5.4
 refresh_if_older_than: 1d
 
 conversations:
@@ -185,7 +187,7 @@ Important schema notes for workflow authors and agents:
 - Wiki pages are refreshed incrementally and re-embedded only when their Git blob SHA changes.
 - `query.preload_query_sources_on_startup: true` reduces first-query latency by warming preloadable sources after server startup.
 - `query.code_search.enabled` lets Repo Mind Light use its code-search-backed retrieval path when available.
-- `query.graph_rag_zero` and `query.soma` are mutually exclusive local retrieval backends. `graph_rag_zero` is embedding-based and enabled by default. `soma` is an embedding-free graph-structural backend available in the default public image. To use Soma, set `query.graph_rag_zero: null` and configure `query.soma: {}` (or a Soma config object).
+- `query.graph_rag_zero` and `query.soma` are mutually exclusive local retrieval backends. `graph_rag_zero` is embedding-based and enabled by default. `soma` is an embedding-free graph-structural backend available in the default public image. To use Soma, set `query.graph_rag_zero: null` and configure `query.soma: {}` (or a Soma config object). Switching back from Soma to `graph_rag_zero` requires a full reindex to populate embeddings on stored chunks.
 
 Example wiki indexing configuration:
 
