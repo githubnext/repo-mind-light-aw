@@ -186,6 +186,11 @@ Important schema notes for workflow authors and agents:
 - `query.preload_query_sources_on_startup: true` reduces first-query latency by warming preloadable sources after server startup.
 - `query.code_search.enabled` lets Repo Mind Light use its code-search-backed retrieval path when available.
 - `query.graph_rag_zero` and `query.soma` are mutually exclusive local retrieval backends. `graph_rag_zero` is embedding-based and enabled by default. `soma` is an embedding-free graph-structural backend available in the default public image. To use Soma, set `query.graph_rag_zero: null` and configure `query.soma: {}` (or a Soma config object).
+- `soma.max_tokens` controls the token budget passed to the Soma query CLI (default `4000`).
+- `soma.assembly` controls the Soma assembly strategy (default `"dropoff"`).
+- `soma.query_timeout_seconds` and `soma.index_timeout_seconds` control per-operation timeouts for Soma queries and index builds (defaults `30.0` and `600.0` seconds respectively).
+- `soma.corpus_subdir` controls the subdirectory under `store_path` where Soma's staged Markdown corpus is written (default `"soma-corpus"`).
+- When `query.graph_rag_zero` is `null` and only embedding-free sources are configured (soma, code_search), Repo Mind Light skips embedding API calls during both indexing and querying. `COPILOT_GITHUB_TOKEN` is still required for chat steps. Re-enabling `graph_rag_zero` later requires a full reindex.
 
 Example wiki indexing configuration:
 
@@ -201,6 +206,18 @@ wiki:
   exclude_paths:
     - "_Sidebar.*"
     - "_Footer.*"
+```
+
+Example Soma configuration:
+
+```yaml
+query:
+  graph_rag_zero: null
+  soma:
+    max_tokens: 4000
+    assembly: dropoff
+    query_timeout_seconds: 30.0
+    index_timeout_seconds: 600.0
 ```
 
 ## Query Behavior
