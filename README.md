@@ -139,7 +139,7 @@ The most important underlying Repo Mind Light configuration fields are:
 ```yaml
 slug: owner/repo
 store_path: /var/lib/repo-mind-light/index
-chat_model: claude-sonnet-4.6
+chat_model: claude-sonnet-4.6    # or gpt-5.4
 refresh_if_older_than: 1d
 
 conversations:
@@ -185,7 +185,9 @@ Important schema notes for workflow authors and agents:
 - Wiki pages are refreshed incrementally and re-embedded only when their Git blob SHA changes.
 - `query.preload_query_sources_on_startup: true` reduces first-query latency by warming preloadable sources after server startup.
 - `query.code_search.enabled` lets Repo Mind Light use its code-search-backed retrieval path when available.
+- `chat_model` accepts `claude-sonnet-4.6` (default) or `gpt-5.4`.
 - `query.graph_rag_zero` and `query.soma` are mutually exclusive local retrieval backends. `graph_rag_zero` is embedding-based and enabled by default. `soma` is an embedding-free graph-structural backend available in the default public image. To use Soma, set `query.graph_rag_zero: null` and configure `query.soma: {}` (or a Soma config object).
+- When `query.graph_rag_zero` is `null` and only embedding-free sources are active (Soma, code search), Repo Mind Light skips embedding-API calls during both indexing and querying. `COPILOT_GITHUB_TOKEN` is still required for chat model calls. Switching back to `graph_rag_zero` later requires a full reindex to populate embeddings.
 
 Example wiki indexing configuration:
 
