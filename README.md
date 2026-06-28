@@ -139,7 +139,7 @@ The most important underlying Repo Mind Light configuration fields are:
 ```yaml
 slug: owner/repo
 store_path: /var/lib/repo-mind-light/index
-chat_model: claude-sonnet-4.6
+chat_model: claude-sonnet-4.6       # or gpt-5.4
 refresh_if_older_than: 1d
 
 conversations:
@@ -171,6 +171,7 @@ query:
 Important schema notes for workflow authors and agents:
 
 - `slug` is the only required Repo Mind Light field.
+- `chat_model` accepts `claude-sonnet-4.6` (default) or `gpt-5.4`.
 - `refresh_if_older_than` controls whether cached indexes are reused or refreshed.
 - `conversations` controls issue, pull request, and discussion indexing. The legacy `indexing` key is still accepted by Repo Mind Light, but new workflows should use `conversations`.
 - `issue_state` accepts `open`, `closed`, `all`, `none`, or `null`.
