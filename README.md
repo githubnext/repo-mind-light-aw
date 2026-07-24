@@ -41,7 +41,7 @@ The final answer can combine evidence from:
 - repository content already captured in the Repo Mind Light index
 - GitHub code search results used to mine relevant code snippets
 
-Repo Mind Light does not just retrieve raw matches. It also uses embeddings and a generative model to synthesize a final answer from the retrieved evidence.
+Repo Mind Light does not just retrieve raw matches. It uses a generative model to synthesize a final answer from the retrieved evidence. With the default GraphRAG Zero backend it also computes embeddings; with the Soma embedding-free backend, embedding-API calls are skipped entirely during indexing and querying.
 
 The intended usage pattern is:
 
@@ -105,16 +105,18 @@ Using Repo Mind Light adds extra cost beyond the base gh-aw workflow run.
 
 That cost exists because Repo Mind Light:
 
-- computes embedding vectors during indexing and refresh
 - uses a generative model to produce the final `query` answer
+- computes embedding vectors during indexing and refresh when using the default GraphRAG Zero backend
+
+With the Soma embedding-free backend (`query.graph_rag_zero: null`, `query.soma: {}`), embedding-API calls are skipped entirely during both indexing and querying. A CAPI token is still required for answer generation and query rewriting even when embeddings are not used.
 
 This is why the shared workflow requires `COPILOT_GITHUB_TOKEN`.
 
 Consumer workflows can still use another outer agent runtime such as Claude or Codex.
 
-The important constraint is not the outer workflow engine. The important constraint is that Repo Mind Light itself depends on CAPI model calls for embeddings and answer generation.
+The important constraint is not the outer workflow engine. The important constraint is that Repo Mind Light itself depends on CAPI model calls for answer generation (and, with the default GraphRAG Zero backend, for embeddings too).
 
-So even when the surrounding workflow uses a non-Copilot engine, `COPILOT_GITHUB_TOKEN` still must be available to Repo Mind Light or indexing and query synthesis will not work.
+So even when the surrounding workflow uses a non-Copilot engine, `COPILOT_GITHUB_TOKEN` still must be available to Repo Mind Light or query synthesis will not work.
 
 ## Inputs
 
